@@ -2,55 +2,55 @@
 
 # MapForge
 
-**Editor map pro [Mindustry](https://github.com/Anuken/Mindustry), který z hrubé skici vygeneruje přirozeně vypadající terén.**
+**A map editor for [Mindustry](https://github.com/Anuken/Mindustry) that turns a rough sketch into natural-looking terrain.**
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white)
 ![Mindustry](https://img.shields.io/badge/Mindustry-Serpulo-ffd37f)
 
-![Skica → vygenerovaná mapa](docs/preview.jpg)
+![Sketch → generated map](docs/preview.jpg)
 
 </div>
 
-## O projektu
+## About
 
-Kreslit hezkou mapu ve vestavěném editoru Mindustry je pracné. Mapy pak často vypadají jako
-poskládané z obdélníků: tvrdé přechody, rovné břehy, jednotvárná podlaha.
+Making a good-looking map in Mindustry's built-in editor takes a lot of work. Hand-made maps often end up
+looking like they were built from rectangles, with hard transitions, straight shorelines and flat floors.
 
-MapForge to dělá opačně. Ty určíš **layout**, tedy kde je pevnina, řeka, jezero, skály, core
-a spawny. Generátor kolem toho dopočítá **detaily**, jaké mají kampaňové mapy:
-- vlnité okraje,
-- hlubokou a mělkou vodu s plážemi,
-- plynulé přechody biomů,
-- skalní útvary, balvany a ložiska rud.
+MapForge works the other way round. You draw the **layout**: where the land, rivers, lakes, rocks, core
+and spawns go. The generator fills in the kind of **detail** you see on the campaign maps:
+- organic, wavy edges;
+- deep and shallow water with beaches;
+- smooth blending between biomes;
+- rock formations, boulders and ore deposits.
 
-Když se výsledek nelíbí, stačí reroll. Když se líbí, doladíš ho ručně.
+If you don't like the result, reroll it. If you do, polish it by hand.
 
-### Cíle
+### Goals
 
-- **Mapy, které nevypadají uměle**: noise, domain warping a distance fields místo pravítka.
-- **Rychlá iterace**: skica → generování → reroll jednotlivých vrstev → ruční úpravy, bez restartu hry.
-- **Kompatibilita se hrou**: export do `.msav`, který jde rovnou otevřít v Mindustry.
-- **Skriptovatelnost**: CLI a API, přes které může mapy navrhovat i AI asistent.
+- **Maps that don't look artificial.** Noise, domain warping and distance fields instead of straight lines.
+- **Fast iteration.** Sketch, generate, reroll single layers and edit by hand without ever restarting the game.
+- **Game compatibility.** Exports a `.msav` that opens directly in Mindustry.
+- **Scriptable.** A CLI and an API that let you, or an AI assistant, design maps from code.
 
-## Funkce
+## Features
 
-- 🖌️ **Skica**: štětec, obdélník, elipsa, řeky, výplň, symetrie pro PvP mapy.
-- 📐 **Relativní a fixní tvary**:
-  - relativní tvar je náznak, který noise přetvoří;
-  - fixní tvar zůstane přesně tak, jak je nakreslený.
-- 🌊 **Generátor**: 12 biomů a kapaliny (voda, kontaminovaná voda, slag, dehet, kryo), u kterých jde nastavit hloubka a pláže. K tomu skály, rudy a dekorace.
-- 🎲 **Reroll po vrstvách**: tvary, podlahy, skály, rudy, nebo dekorace zvlášť. `Ctrl+Z` vrátí i reroll.
-- 🔒 **Zámky**: ručně upravené dlaždice se zamknou a další generování je nepřepíše.
-- 🖼️ **Skica z obrázku**: nakresli mapu v malování, červené čáry se převedou na zdi a vnitřek a vnějšek se rozpozná automaticky.
-- ✨ **Zkrášlení existující mapy**: načte `.msav`, odvodí z něj skicu a vygeneruje ji znovu s přirozenými detaily.
-- 📏 Změna velikosti, zrcadlení, mřížka, průběžné ukládání projektu v prohlížeči.
-- 💾 Import a export `.msav` (save verze 11) a ukládání projektu (`.mfp.json`).
-- 🤖 **CLI a bridge** pro skriptování a spolupráci s AI asistentem.
+- 🖌️ **Sketch mode**: brush, rectangle, ellipse, rivers, fill, and symmetry for PvP maps.
+- 📐 **Relative and fixed shapes**:
+  - a relative shape is a hint that the noise reshapes;
+  - a fixed shape stays exactly as drawn.
+- 🌊 **Generator**: 12 biomes and liquids (water, tainted water, slag, tar, cryofluid) with adjustable depth and beaches. It also places rocks, ores and decoration.
+- 🎲 **Per-layer reroll**: shapes, floors, rocks, ores or decoration on their own. `Ctrl+Z` undoes a reroll too.
+- 🔒 **Locks**: tiles you edit by hand are locked, so regenerating never overwrites them.
+- 🖼️ **Sketch from an image**: draw your map in any paint program. Red lines become walls, and inside and outside are detected automatically.
+- ✨ **Beautify existing maps**: load a `.msav`, derive a sketch from it and regenerate it with natural detail.
+- 📏 Resize, flip, grid overlay, and the project autosaves in the browser.
+- 💾 `.msav` import and export (save version 11) and project files (`.mfp.json`).
+- 🤖 **CLI and editor bridge** for scripting and for working with an AI assistant.
 
-## Spuštění
+## Getting started
 
-Potřebuješ [Node.js](https://nodejs.org/) 18 nebo novější.
+You need [Node.js](https://nodejs.org/) 18 or newer.
 
 ```bash
 git clone https://github.com/TousTarm/Mindustry_advanced_map_editor.git
@@ -59,63 +59,64 @@ npm install
 npm run dev
 ```
 
-Editor poběží na **http://localhost:5178**.
+The editor runs at **http://localhost:5178**.
 
-Produkční build (statické soubory do `dist/`):
+To build the static files into `dist/`:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Jak se s tím pracuje
+## How it works
 
-1. **Skica** (`Tab` přepíná režimy): namaluj hrubé oblasti a polož core, spawny a případně ložiska rud.
-   - Oblasti jsou biomy, skála, voda a slag.
-   - Řeky kreslí nástroj *Řeka*: klikáním přidáváš body, dvojklik ji dokončí.
-   - Po každém tahu se mapa přegeneruje.
-2. **Generátor** (pravý panel): posuvníky pro zvlnění tvarů, prolínání biomů, šířku pláží, hloubku vody,
-   množství skal a rud. Tlačítka 🎲 přegenerují jen vybranou vrstvu.
-3. **Úpravy**: ruční kreslení konkrétních bloků (podlahy, zdi, rudy, dekorace). Upravené dlaždice se zamknou.
-4. **Export .msav** stáhne mapu. Ve hře ji najdeš v editoru map přes *Importovat mapu*, nebo ji zkopíruj do složky `maps/`.
+1. **Sketch** (`Tab` switches modes). Paint rough areas and place the core, spawns and any ore deposits.
+   - Areas can be biomes, rock, water or slag.
+   - Draw rivers with the *River* tool: click to add points and double-click to finish.
+   - The map regenerates after every stroke.
+2. **Generator** (right panel). Use the sliders for edge warp, biome blending, beach width, water depth,
+   and how many rocks and ores to place. The 🎲 buttons reroll a single layer.
+3. **Edit**. Paint specific blocks by hand: floors, walls, ores and decoration. Edited tiles get locked.
+4. **Export .msav** downloads the map. In the game, open the map editor and use *Import Map*, or copy the
+   file into your `maps/` folder.
 
-**Obrázek jako skica**:
-- Načti obrázek, na kterém jsou zdi nakreslené červeně.
-- Malé mezery v čarách se uzavřou a ostatní barvy se ignorují.
-- Oblasti se vyplní podle vnoření: vnějšek je skála, uvnitř je pevnina a tvar uvnitř pevniny je zase skála.
-- Obrázek zůstane jako poloprůhledné pozadí.
+**Image as a sketch:**
+- Load a picture where the walls are drawn in red.
+- Small gaps in the lines are closed, and every other colour is ignored.
+- Regions are filled by how deeply they are nested: the outside is rock, the inside is land, and a shape drawn inside the land is rock again.
+- The image stays visible as a semi-transparent background.
 
-### Klávesové zkratky
+### Keyboard shortcuts
 
-| Klávesa | Akce | Klávesa | Akce |
+| Key | Action | Key | Action |
 |---|---|---|---|
-| `B` | štětec | `G` | generovat |
-| `E` | guma | `Shift+G` | nový seed |
-| `F` | výplň (`Shift` = v celé mapě) | `X` | relativní / fixní |
-| `L` | řeka | `[` `]` | velikost štětce |
-| `R` / `O` | obdélník / elipsa | `H` | skica přes mapu |
-| `C` / `S` | core / spawn | `0` | vycentrovat |
-| `Ctrl+Z` / `Ctrl+Y` | zpět / znovu | mezerník, pravé tl. | posun |
+| `B` | brush | `G` | generate |
+| `E` | eraser | `Shift+G` | new seed |
+| `F` | fill (`Shift` = whole map) | `X` | relative / fixed |
+| `L` | river | `[` `]` | brush size |
+| `R` / `O` | rectangle / ellipse | `H` | sketch overlay |
+| `C` / `S` | core / spawn | `0` | center view |
+| `Ctrl+Z` / `Ctrl+Y` | undo / redo | Space, right mouse | pan |
 
 ## CLI
 
 ```bash
-node src/cli.js gen examples/river-valley.json --scale 4   # spec → .msav + náhled .png
-node src/cli.js sketch examples/river-valley.json          # jen náhled layoutu
-node src/cli.js beautify mapa.msav                         # zkrášlí existující mapu
-node src/cli.js image skica.png --width 200                # obrázek s červenými čarami → spec
-node src/cli.js render mapa.msav --scale 4                 # náhled libovolné mapy
-node src/cli.js info mapa.msav                             # velikost, tagy, histogram bloků
-node src/cli.js help                                       # všechny příkazy a parametry
+node src/cli.js gen examples/river-valley.json --scale 4   # spec → .msav + .png preview
+node src/cli.js sketch examples/river-valley.json          # preview only the layout
+node src/cli.js beautify map.msav                          # beautify an existing map
+node src/cli.js image drawing.png --width 200              # red-line drawing → spec
+node src/cli.js render map.msav --scale 4                  # render any map
+node src/cli.js info map.msav                              # size, tags, block histogram
+node src/cli.js help                                       # all commands and options
 ```
 
-Mapa se popisuje jako **spec v JSON**: rozměry, základní biom a seznam tvarů (`fill`, `rect`, `circle`,
-`ellipse`, `polygon`, `path`), core, spawny a ložiska. Vzory jsou v [`examples/`](examples/), přehled
-štítků a parametrů vypíše `node src/cli.js labels`.
+A map is described by a **JSON spec**: its size, a base biome, a list of shapes (`fill`, `rect`, `circle`,
+`ellipse`, `polygon`, `path`), the core, the spawns and any ore deposits. There are more examples in
+[`examples/`](examples/), and `node src/cli.js labels` lists all labels and parameters.
 
 ```json
 {
-  "name": "Moje mapa", "width": 200, "height": 200, "base": "stone", "seed": 7,
+  "name": "My Map", "width": 200, "height": 200, "base": "stone", "seed": 7,
   "shapes": [
     { "type": "fill", "label": "wall" },
     { "type": "circle", "label": "stone", "center": [100, 100], "r": 90 },
@@ -128,32 +129,35 @@ Mapa se popisuje jako **spec v JSON**: rozměry, základní biom a seznam tvarů
 }
 ```
 
-Generátor je deterministický: stejný spec a stejný seed dají vždy stejnou mapu.
+Coordinates are in tiles, with y pointing up and (0, 0) at the bottom-left, the same as in Mindustry.
+Generation is deterministic: the same spec with the same seed always produces the same map.
 
-## Struktura projektu
+## Project structure
 
 ```
-src/core/      generátor, čtení a zápis .msav, renderer, skica (běží v Node i v prohlížeči)
-src/node/      souborové I/O pro CLI
-src/cli.js     příkazová řádka
-web/           editor (Vite, generování běží ve Web Workeru)
-data/          katalog bloků a šablony budov vytažené z Mindustry
-public/        texturový atlas
-scripts/       přegenerování data/ a atlasu ze zdrojáků Mindustry (npm run catalog)
-examples/      ukázkové specy
+src/core/      generator, .msav reader/writer, renderer, sketch (runs in Node and the browser)
+src/node/      file I/O for the CLI
+src/cli.js     command-line interface
+web/           the editor (Vite; generation runs in a Web Worker)
+data/          block catalog and building templates extracted from Mindustry
+public/        sprite atlas
+scripts/       rebuild data/ and the atlas from Mindustry sources (npm run catalog)
+examples/      example specs
 ```
 
-## Plány
+## Roadmap
 
-- [ ] Planeta Erekir
-- [ ] Editor vln nepřátel a pravidel mapy
-- [ ] Pokládání budov a týmů
-- [ ] Další biomy a palety
+- [ ] Erekir planet
+- [ ] Wave and map rules editor
+- [ ] Placing buildings and teams
+- [ ] More biomes and palettes
 
-## Licence
+## License
 
-Kód je pod licencí [MIT](LICENSE). Copyright © 2026 TousTarm.
+MapForge is released under the [MIT License](LICENSE). © 2026 TousTarm.
 
-Textury v `public/atlas.png` a data v `data/` pocházejí ze hry
-[Mindustry](https://github.com/Anuken/Mindustry) od Anuke a řídí se její licencí (GPL-3.0).
-MapForge není oficiální součást Mindustry.
+You're free to use, modify and share it, including in commercial projects. If you build on it or fork it,
+please keep the license notice and **credit TousTarm as the original author**.
+
+The sprites in `public/atlas.png` and the data in `data/` come from [Mindustry](https://github.com/Anuken/Mindustry)
+by Anuke and are covered by its license (GPL-3.0). MapForge is not affiliated with the official game.
