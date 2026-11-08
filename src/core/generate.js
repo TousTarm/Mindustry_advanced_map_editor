@@ -389,7 +389,7 @@ export function generate(sketch, userParams = {}, catalog) {
 
   return {
     width: W, height: H, floor, overlay, block, buildings,
-    tags: { name: sketch.name ?? 'MapForge map', author: sketch.author ?? '', description: sketch.description ?? '', rules: JSON.stringify(sketch.rules ?? {}), genfilters: '[]' },
+    tags: { name: sketch.name ?? 'Mindscape map', author: sketch.author ?? '', description: sketch.description ?? '', rules: JSON.stringify(sketch.rules ?? {}), genfilters: '[]' },
     params: P,
   };
 }

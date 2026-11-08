@@ -582,7 +582,7 @@ function afterLoad() {
 function projectJSON(includeMap = true) {
   const sk = S.sketch;
   const out = {
-    format: 'mapforge-project', version: 1,
+    format: 'mindscape-project', version: 1,
     spec: sketchToSpec(sk, { name: sk.name, author: sk.author, description: sk.description }),
     bg: S.bg && { url: S.bg.url, rect: S.bg.rect, flipX: !!S.bg.flipX, flipY: !!S.bg.flipY },
     params: S.params,
@@ -616,7 +616,7 @@ function loadMsavBytes(bytes, name) {
 const BUILDING_SIZES = Object.fromEntries(Object.entries(B).filter(([, b]) => b.kind === 'building').map(([k, b]) => [k, { size: b.size ?? 1 }]));
 function exportMsav() {
   const m = S.map;
-  m.tags = { ...m.tags, name: S.sketch.name || 'MapForge map', author: S.sketch.author || '', description: S.sketch.description || '' };
+  m.tags = { ...m.tags, name: S.sketch.name || 'Mindscape map', author: S.sketch.author || '', description: S.sketch.description || '' };
   m.tags.genfilters ??= '[]';
   m.tags.rules ??= '{}'; // loaded maps keep their original rules and waves
   for (const [i, b] of m.buildings) if (!b.raw) b.raw = new Uint8Array(templates.buildings[m.block[i]]?.raw ?? templates.buildings['core-shard'].raw);
@@ -634,19 +634,19 @@ let autosaveTimer;
 function scheduleAutosave() {
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(() => {
-    try { localStorage.setItem('mapforge-autosave', JSON.stringify(projectJSON(false))); } catch { /* storage full or blocked */ }
+    try { localStorage.setItem('mindscape-autosave', JSON.stringify(projectJSON(false))); } catch { /* storage full or blocked */ }
   }, 800);
 }
 
 // ---------------------------------------------------------------- Claude bridge
-let lastInbox = Number(localStorage.getItem('mapforge-inbox') || 0);
+let lastInbox = Number(localStorage.getItem('mindscape-inbox') || 0);
 async function pollInbox() {
   try {
     const r = await fetch('/api/inbox');
     const j = await r.json();
     if (j && j.mtime > lastInbox) {
       lastInbox = j.mtime;
-      localStorage.setItem('mapforge-inbox', String(lastInbox));
+      localStorage.setItem('mindscape-inbox', String(lastInbox));
       const d = j.data;
       toast(`🤖 Claude poslal návrh${d.note ? ': ' + d.note : ''}`, [['Načíst', () => loadInbox(d), 'primary'], ['Ignorovat']]);
     }
@@ -668,7 +668,7 @@ async function sendToClaude() {
     const body = { ...projectJSON(true), sentAt: new Date().toISOString() };
     const r = await fetch('/api/outbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!r.ok) throw new Error(r.statusText);
-    toast('Odesláno do .mapforge/outbox – napiš Claudovi, ať se podívá.');
+    toast('Odesláno do .mindscape/outbox – napiš Claudovi, ať se podívá.');
   } catch (err) { toast('Bridge není dostupný (spusť editor přes npm run dev): ' + err.message); }
 }
 
@@ -844,7 +844,7 @@ function initUI() {
       }
       case 'flip-x': flipAll('x'); break;
       case 'flip-y': flipAll('y'); break;
-      case 'save-project': download(JSON.stringify(projectJSON(true)), fileBase() + '.mfp.json', 'application/json'); break;
+      case 'save-project': download(JSON.stringify(projectJSON(true)), fileBase() + '.mindscape.json', 'application/json'); break;
       case 'export': if (S.map) download(exportMsav(), fileBase() + '.msav', 'application/octet-stream'); break;
       case 'undo': undo(); break;
       case 'redo': redo(); break;
@@ -873,7 +873,7 @@ function initUI() {
     try {
       if (file.name.endsWith('.json')) {
         const j = JSON.parse(new TextDecoder().decode(bytes));
-        if (j.format === 'mapforge-project') loadProject(j);
+        if (j.format === 'mindscape-project' || j.format === 'mapforge-project') loadProject(j);
         else { S.sketch = rasterizeSpec(j); S.params = { ...structuredClone(DEFAULT_PARAMS), ...(j.params ?? {}), seed: j.seed ?? 1 }; S.locks = new Map(); afterLoad(); generateNow(false); }
       } else loadMsavBytes(bytes, file.name.replace(/\.msav$/, ''));
     } catch (err) { toast('Soubor nejde načíst: ' + err.message); console.error(err); }
@@ -921,7 +921,7 @@ function initUI() {
     if (e.ctrlKey || e.metaKey) {
       if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
       if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
-      if (k === 's') { e.preventDefault(); download(JSON.stringify(projectJSON(true)), fileBase() + '.mfp.json', 'application/json'); }
+      if (k === 's') { e.preventDefault(); download(JSON.stringify(projectJSON(true)), fileBase() + '.mindscape.json', 'application/json'); }
       return;
     }
     if (k === ' ') { spaceDown = true; e.preventDefault(); return; }
@@ -1065,8 +1065,8 @@ async function boot() {
   buildTools();
   let restored = false;
   try {
-    const saved = JSON.parse(localStorage.getItem('mapforge-autosave'));
-    if (saved?.format === 'mapforge-project') { loadProject(saved); restored = true; status('Obnoven poslední projekt'); }
+    const saved = JSON.parse(localStorage.getItem('mindscape-autosave') ?? localStorage.getItem('mapforge-autosave'));
+    if (saved?.format === 'mindscape-project' || saved?.format === 'mapforge-project') { loadProject(saved); restored = true; status('Obnoven poslední projekt'); }
   } catch { /* ignore */ }
   if (!restored) newProject(200, 200, 'stone', true);
   pollInbox();

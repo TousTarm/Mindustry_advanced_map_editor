@@ -1,0 +1,47 @@
+name: Bug report
+description: Something doesn't work or a generated map looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug. Please fill in as much as you can.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear description of the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a new 200x200 map
+        2. Draw a river with the River tool
+        3. Press Generate
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Screenshots and files
+      description: |
+        Screenshots help a lot. If the problem is with a specific map, attach the project file
+        (Save project → `.mindscape.json`) or the exported `.msav` (zip it first, GitHub doesn't accept .msav).
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      options:
+        - Web editor
+        - CLI
+        - In game (exported map)
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Browser / Node.js version, OS, Mindustry version if relevant.
+      placeholder: Firefox 132, Node 22, Windows 11, Mindustry v146

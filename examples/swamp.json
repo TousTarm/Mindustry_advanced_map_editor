@@ -1,5 +1,5 @@
 {
-  "name": "Spore Marsh", "author": "MapForge", "width": 200, "height": 200, "base": "moss", "seed": 11,
+  "name": "Spore Marsh", "author": "Mindscape", "width": 200, "height": 200, "base": "moss", "seed": 11,
   "shapes": [
     { "type": "fill", "label": "wall" },
     { "type": "ellipse", "label": "moss", "center": [100, 100], "rx": 90, "ry": 90 },

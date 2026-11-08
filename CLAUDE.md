@@ -1,7 +1,7 @@
-# MapForge – notes for Claude
+# Mindscape – notes for Claude
 
 Standalone Mindustry (Serpulo) map editor + generator. The Mindustry source in `../Mindustry_map_editor-master`
-is reference only (block list, sprites, save format); MapForge does not depend on it at runtime.
+is reference only (block list, sprites, save format); Mindscape does not depend on it at runtime.
 
 ## Layout
 - `src/core/` – isomorphic JS (Node + browser):
@@ -21,7 +21,7 @@ is reference only (block list, sprites, save format); MapForge does not depend o
 2. `node src/cli.js sketch spec.json` to check the layout, `node src/cli.js gen spec.json --scale 4` to generate,
    then **look at the PNG** and iterate (params via `--set rocks=0.3`, seeds via `--seed`).
 3. `node src/cli.js push spec.json --note "..."` sends it to the running editor; the user gets a "Load" prompt.
-4. When the user presses "→ Claude" in the editor: `node src/cli.js pull` writes `.mapforge/outbox.spec.json`,
+4. When the user presses "→ Claude" in the editor: `node src/cli.js pull` writes `.mindscape/outbox.spec.json`,
    `outbox.sketch.png`, `outbox.msav`, `outbox.png` – read the PNGs to see what they drew.
 5. `node src/cli.js image drawing.png --width 200` turns the user's hand drawing into a spec (red strokes = walls,
    outside of the outline = wall, small loops = rocks; `src/core/imagesketch.js`).

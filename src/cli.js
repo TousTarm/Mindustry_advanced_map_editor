@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// MapForge CLI. Run `node src/cli.js help`.
+// Mindscape CLI. Run `node src/cli.js help`.
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
@@ -13,9 +13,9 @@ import { imageToLabels } from './core/imagesketch.js';
 import { rleEncode } from './core/project.js';
 import { ROOT } from './node/io.js';
 
-const BRIDGE = path.join(ROOT, '.mapforge');
+const BRIDGE = path.join(ROOT, '.mindscape');
 
-const HELP = `mapforge - Mindustry map generator and tools
+const HELP = `mindscape - Mindustry map generator and tools
 
   gen <spec.json> [-o out.msav] [--png out.png] [--scale N] [--seed N] [--set key=value ...]
       Generate a map from a sketch spec. --set overrides generator params (e.g. --set rocks=0.4).
@@ -30,7 +30,7 @@ const HELP = `mapforge - Mindustry map generator and tools
       Also writes <out>.spec.json (editable sketch) and <out>.png.
   derive <map.msav> [-o spec.json] [--generalize N]
       Only derive the sketch spec from a map (to edit it by hand, then use gen).
-  push <spec.json|project.mfp.json|map.msav> [--note "text"]
+  push <spec.json|project.mindscape.json|map.msav> [--note "text"]
       Send a design to the running web editor (npm run dev); it offers to load it.
   pull [-o dir]
       Fetch what the editor sent with "→ Claude": writes outbox.spec.json, outbox.msav, outbox.png, outbox.sketch.png.
@@ -154,7 +154,7 @@ switch (cmd) {
     if (f.endsWith('.msav')) msg = { type: 'msav', name: path.basename(f, '.msav'), msavBase64: fs.readFileSync(f).toString('base64') };
     else {
       const j = JSON.parse(fs.readFileSync(f, 'utf8'));
-      msg = j.format === 'mapforge-project' ? { type: 'project', project: j } : { type: 'spec', spec: j };
+      msg = (j.format === 'mindscape-project' || j.format === 'mapforge-project') ? { type: 'project', project: j } : { type: 'spec', spec: j };
     }
     if (a.note) msg.note = a.note;
     fs.writeFileSync(path.join(BRIDGE, 'inbox.json'), JSON.stringify(msg));

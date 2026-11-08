@@ -1,5 +1,5 @@
 {
-  "name": "mapforge",
+  "name": "mindscape",
   "version": "1.0.0",
   "description": "Mindustry map editor with natural terrain generation",
   "author": "TousTarm",
@@ -29,7 +29,7 @@
     "vite": "^8.3.6"
   },
   "bin": {
-    "mapforge": "src/cli.js"
+    "mindscape": "src/cli.js"
   },
   "private": true
 }

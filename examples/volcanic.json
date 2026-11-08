@@ -1,5 +1,5 @@
 {
-  "name": "Ember Rift", "author": "MapForge", "width": 220, "height": 180, "base": "basalt", "seed": 3,
+  "name": "Ember Rift", "author": "Mindscape", "width": 220, "height": 180, "base": "basalt", "seed": 3,
   "shapes": [
     { "type": "fill", "label": "wall" },
     { "type": "polygon", "label": "basalt", "points": [[15,30],[60,10],[150,15],[205,40],[210,120],[170,168],[90,170],[25,150],[10,90]] },

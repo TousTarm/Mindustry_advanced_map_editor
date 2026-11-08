@@ -1,5 +1,5 @@
 node_modules/
 dist/
-.mapforge/
+.mindscape/
 examples/*.msav
 examples/*.png

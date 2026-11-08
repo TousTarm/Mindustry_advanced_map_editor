@@ -1,16 +1,16 @@
 // Dev server for the web editor + a tiny file-based bridge so Claude (via the CLI) and the editor can
 // exchange sketches and maps:
-//   CLI `push`  -> .mapforge/inbox.json  -> editor polls GET /api/inbox and offers to load it
-//   editor "Send to Claude" -> POST /api/outbox -> .mapforge/outbox.json + outbox.msav (CLI `pull` reads them)
+//   CLI `push`  -> .mindscape/inbox.json  -> editor polls GET /api/inbox and offers to load it
+//   editor "Send to Claude" -> POST /api/outbox -> .mindscape/outbox.json + outbox.msav (CLI `pull` reads them)
 import { defineConfig } from 'vite';
 import fs from 'fs';
 import path from 'path';
 
-const BRIDGE = path.resolve('.mapforge');
+const BRIDGE = path.resolve('.mindscape');
 
 function bridge() {
   return {
-    name: 'mapforge-bridge',
+    name: 'mindscape-bridge',
     configureServer(server) {
       server.middlewares.use('/api/inbox', (req, res) => {
         const f = path.join(BRIDGE, 'inbox.json');
