@@ -1,5 +1,5 @@
 // Serpulo biome and liquid palettes. Derived from floor-adjacency stats of the campaign maps
-// (data/adjacency.json): e.g. deep-water > shallow-water > sand-water > sand-floor is the dominant chain.
+// (which floors border which), e.g. deep-water > shallow-water > sand-water > sand-floor is the dominant chain.
 //
 // Biome "layers" share a noise field when they use the same `noise` key; increasing thresholds on one
 // field produce nested, concentric transitions (snow > ice-snow > ice) instead of random blotches.

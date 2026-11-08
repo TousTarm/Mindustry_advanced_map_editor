@@ -5,7 +5,7 @@ import { readMsav, writeMsav } from '../src/core/msav.js';
 import { emptySketch, paintShape, rasterizeSpec } from '../src/core/sketch.js';
 import { DEFAULT_PARAMS } from '../src/core/generate.js';
 import { LABELS, LABEL, BIOMES, LIQUIDS, ORES } from '../src/core/palettes.js';
-import { deriveSketch, sketchToSpec, applyLocks, rleEncode } from '../src/core/project.js';
+import { deriveSketch, sketchToSpec, applyLocks } from '../src/core/project.js';
 import { imageToLabels } from '../src/core/imagesketch.js';
 
 const $ = (s) => document.querySelector(s);
@@ -55,7 +55,6 @@ const S = {
   undo: [], redo: [], blockTab: 'floor', blockQuery: '', brushShape: 'circle', fixedMode: false,
   bg: null, bgOpacity: 0.4, // background image: {url, img, rect: [x0, y0, w, h] in tiles, flipX, flipY}
 };
-const DEFAULT_RULES = { waves: true, waveTimer: true, waveSpacing: 120, attackMode: false, pvp: false };
 const inBrush = (dx, dy, r) => (S.brushShape === 'square' ? Math.max(Math.abs(dx), Math.abs(dy)) <= r + 0.01 : dx * dx + dy * dy <= r * r + 0.25);
 let atlas, atlasUrl;
 const canvas = $('#canvas'), ctx = canvas.getContext('2d');
@@ -298,7 +297,7 @@ function toolDown(p, e) {
     else if (t === 'fill') { pushUndo(['sketch']); for (const q of symmetric(tileOf(p))) floodSketch(...q); updateSketchLayer(); afterSketchChange(); }
     else if (t === 'path') { pathPoints.push(p); }
     else if (t === 'line') { pushUndo(['sketch']); }
-    else if (t === 'core' || t === 'spawn' || t === 'ore') { pushUndo(['markers']); placeMarker(t, tileOf(p), e); updateMarkersUI(); afterSketchChange(); }
+    else if (t === 'core' || t === 'spawn' || t === 'ore') { pushUndo(['markers']); placeMarker(t, tileOf(p), e); afterSketchChange(); }
   } else {
     if (t === 'brush' || t === 'erase' || t === 'lock' || t === 'unlock' || t === 'spray') { pushUndo(['tiles', 'locks']); paintTiles(p, p); }
     else if (t === 'line') { pushUndo(['tiles', 'locks']); }
@@ -572,7 +571,6 @@ function newProject(w, h, base, island) {
   S.sketch.cores = [{ pos: [Math.round(w * 0.3), Math.round(h * 0.3)], team: 1, block: 'core-shard' }];
   S.sketch.spawns = [[Math.round(w * 0.72), Math.round(h * 0.72)]];
   S.sketch.name = 'Nová mapa';
-  S.sketch.rules = { ...DEFAULT_RULES };
   S.bg = null;
   S.map = null; S.locks = new Map(); S.undo = []; S.redo = [];
   afterLoad();
@@ -585,7 +583,7 @@ function projectJSON(includeMap = true) {
   const sk = S.sketch;
   const out = {
     format: 'mapforge-project', version: 1,
-    spec: sketchToSpec(sk, { name: sk.name, author: sk.author, description: sk.description, rules: sk.rules }),
+    spec: sketchToSpec(sk, { name: sk.name, author: sk.author, description: sk.description }),
     bg: S.bg && { url: S.bg.url, rect: S.bg.rect, flipX: !!S.bg.flipX, flipY: !!S.bg.flipY },
     params: S.params,
     locks: [...S.locks].map(([i, t]) => [i, t.floor, t.overlay, t.block]),
@@ -595,7 +593,6 @@ function projectJSON(includeMap = true) {
 }
 function loadProject(p) {
   S.sketch = rasterizeSpec(p.spec);
-  S.sketch.rules ??= { ...DEFAULT_RULES };
   if (p.params && !('deep' in p.params)) p.params.border = 0; // projects from before the border default changed
   setBackground(p.bg ?? null);
   S.params = { ...structuredClone(DEFAULT_PARAMS), ...p.params };
@@ -610,7 +607,6 @@ function loadMsavBytes(bytes, name) {
   S.map = map;
   S.sketch = deriveSketch(map, catalog);
   S.sketch.name ||= name;
-  S.sketch.rules = { ...DEFAULT_RULES, ...parseRules(map.tags?.rules) };
   S.bg = null;
   S.locks = new Map(); S.undo = []; S.redo = [];
   S.autoGen = false; $('#auto-gen').checked = false;
@@ -622,7 +618,7 @@ function exportMsav() {
   const m = S.map;
   m.tags = { ...m.tags, name: S.sketch.name || 'MapForge map', author: S.sketch.author || '', description: S.sketch.description || '' };
   m.tags.genfilters ??= '[]';
-  m.tags.rules = mergeRules(m.tags.rules, S.sketch.rules);
+  m.tags.rules ??= '{}'; // loaded maps keep their original rules and waves
   for (const [i, b] of m.buildings) if (!b.raw) b.raw = new Uint8Array(templates.buildings[m.block[i]]?.raw ?? templates.buildings['core-shard'].raw);
   return writeMsav(m, templates.blocks, { ...BUILDING_SIZES, emptyMarkers: new Uint8Array(templates.emptyMarkers) });
 }
@@ -822,15 +818,9 @@ function syncMapUI() {
   $('#map-name').value = S.sketch.name ?? '';
   $('#map-author').value = S.sketch.author ?? '';
   $('#map-desc').value = S.sketch.description ?? '';
-  S.sketch.rules ??= { ...DEFAULT_RULES };
-  for (const el of document.querySelectorAll('[data-rule]')) {
-    const v = S.sketch.rules[el.dataset.rule] ?? DEFAULT_RULES[el.dataset.rule];
-    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
-  }
   $('#base-biome').value = S.sketch.base;
   $('#map-size').textContent = `${W()} × ${H()} dlaždic`;
 }
-function updateMarkersUI() { requestDraw(); }
 
 function initUI() {
   for (const sel of [$('#base-biome'), document.querySelector('#new-dialog select[name=base]')]) {
@@ -908,12 +898,6 @@ function initUI() {
     resizeAll(clamp(+f.w.value, 20, 2000), clamp(+f.h.value, 20, 2000), f.ax.value, f.ay.value);
   });
   $('#map-desc').addEventListener('input', (e) => { S.sketch.description = e.target.value; scheduleAutosave(); });
-  for (const el of document.querySelectorAll('[data-rule]')) {
-    el.addEventListener('change', () => {
-      S.sketch.rules = { ...S.sketch.rules, [el.dataset.rule]: el.type === 'checkbox' ? el.checked : +el.value };
-      scheduleAutosave();
-    });
-  }
   $('#bg-opacity').addEventListener('input', (e) => { S.bgOpacity = e.target.value / 100; requestDraw(); });
   const syncFixed = () => document.querySelectorAll('[data-fixed]').forEach((b) => b.classList.toggle('active', (b.dataset.fixed === '1') === S.fixedMode));
   document.querySelectorAll('[data-fixed]').forEach((b) => b.addEventListener('click', () => { S.fixedMode = b.dataset.fixed === '1'; syncFixed(); }));
@@ -956,28 +940,7 @@ function initUI() {
   window.addEventListener('keyup', (e) => { if (e.key === ' ') spaceDown = false; });
 }
 
-// ---------------------------------------------------------------- rules, background image, resize, flip
-// Rules are stored in Mindustry's JSON format; seconds in the UI, ticks (60/s) in the file.
-// Map files use Arc's relaxed JSON (unquoted keys), so only read the few fields we edit.
-function parseRules(str = '') {
-  const r = {};
-  for (const k of Object.keys(DEFAULT_RULES)) {
-    const m = str.match(new RegExp(`"?\\b${k}"?\\s*:\\s*"?([\\w.]+)`));
-    if (m) r[k] = m[1] === 'true' ? true : m[1] === 'false' ? false : +m[1];
-  }
-  if (r.waveSpacing) r.waveSpacing = Math.round(r.waveSpacing / 60);
-  return r;
-}
-// Append our fields to the original rules object; Arc's reader lets later keys win, so waves/spawns/etc. survive.
-function mergeRules(str, rules = {}) {
-  const ours = { ...DEFAULT_RULES, ...rules };
-  ours.waveSpacing = Math.round((ours.waveSpacing ?? 120) * 60);
-  const pairs = Object.entries(ours).map(([k, v]) => `${k}:${v}`).join(',');
-  const base = (str || '{}').trim();
-  if (!base.endsWith('}')) return `{${pairs}}`;
-  const inner = base.slice(1, -1).trim();
-  return `{${inner}${inner ? ',' : ''}${pairs}}`;
-}
+// ---------------------------------------------------------------- background image, resize, flip
 function setBackground(bg) {
   if (!bg) { S.bg = null; return; }
   const img = new Image();
@@ -1073,7 +1036,6 @@ function applyImage(form) {
       if (form.fixedWalls.checked) for (let i = 0; i < w * h; i++) S.sketch.fixed[i] = S.sketch.labels[i] ? 1 : 0;
     }
     S.sketch.name = S.sketch.name || 'Nová mapa';
-    S.sketch.rules = { ...DEFAULT_RULES };
     S.map = null; S.locks = new Map();
     setBackground({ url, rect: [0, 0, w, h] });
     afterLoad();

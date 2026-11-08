@@ -142,7 +142,6 @@ export function renderMap(map, catalog, atlas, opts = {}) {
   }
 
   // 5. blocks: walls, props, buildings
-  const wallShade = opts.wallShade ?? 1;
   for (let y = ly0; y < ly1; y++) for (let x = lx0; x < lx1; x++) {
     const i = idx(x, y), n = map.block[i];
     if (!n || n === 'air' || n === '@part') continue;
@@ -167,7 +166,7 @@ export function renderMap(map, catalog, atlas, opts = {}) {
       continue;
     }
     if (x < rx0 || x >= rx1 || y < ry0 || y >= ry1) continue;
-    drawTile(x, y, n, b?.kind === 'wall' ? wallShade : 1);
+    drawTile(x, y, n);
   }
 
   // 6. darkness inside wall masses, bilinear like the game's blurred darkness shader

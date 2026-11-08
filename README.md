@@ -38,7 +38,6 @@ Další možnosti:
   znovu skála. Malé smyčky jsou skály. Ostatní barvy se ignorují.
 - **Změnit velikost**: šířka a výška s ukotvením. Nový prostor pokračuje tím, co je na okraji.
   K tomu zrcadlení mapy.
-- **Pravidla**: vlny, časovač, interval vln, útok, PvP. Popis mapy.
 - Úpravy: štětec (kruh nebo čtverec), čára, sprej, výplň (`Shift` = nahradit v celé mapě), kapátko.
 - **Symetrie** (zrcadlení nebo rotace) pro PvP mapy. Se symetrií vznikne protilehlé core jako nepřátelské.
 - **Otevřít .msav** načte existující mapu a odvodí z ní skicu. **✨ Zkrášlit mapu** ji přegeneruje

@@ -36,7 +36,6 @@ Maps must carry `genfilters: '[]'`, otherwise the game adds its default ores/bou
 ## Generator rules worth keeping
 - Biome patch layers only paint onto the base floor or their own nested chain (same `noise` key) – patches must not punch holes into each other.
 - Liquids *and painted walls* use the gentle warp, so thin rivers/wall lines stay connected and a later stroke wins; painted walls are never eroded by the CA.
-- UI test: `node scripts/test-ui.mjs <image> <outdir>` (needs `npm run dev` running).
 - Sketch has a `fixed` mask (spec: `fixed: true` per shape or `fixedRLE`): fixed tiles are taken exactly (no warp, no rocks/CA, path carving avoids fixed walls); relative tiles are hints.
 - Image import fills regions by even-odd nesting depth across red lines (outside = rock, inside = land, shape in land = rock).
 - CA treats out-of-map neighbours as the tile itself (otherwise walls appear along every map edge).
