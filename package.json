@@ -2,6 +2,18 @@
   "name": "mapforge",
   "version": "1.0.0",
   "description": "Mindustry map editor with natural terrain generation",
+  "author": "TousTarm",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TousTarm/Mindustry_advanced_map_editor.git"
+  },
+  "keywords": [
+    "mindustry",
+    "map-editor",
+    "procedural-generation",
+    "terrain"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
