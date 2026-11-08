@@ -48,16 +48,18 @@ Reroll anything you don't like, lock what you do, and finish by hand.
 - **Image import.** Draw a map in any paint program and load it as the sketch:
   - red lines become walls and small gaps in them are closed;
   - enclosed regions are classified as inside or outside automatically;
+  - only the drawn walls are used, with no random rocks unless you add them;
   - the image stays visible as an adjustable background.
 
 **Generation**
 - 12 biomes and 5 liquids (water, tainted water, slag, tar, cryofluid), with configurable depth and beaches.
-- Rocks, boulders, vegetation and ore deposits. Starting ores are guaranteed near the core, and a walkable path from each spawn to the core is guaranteed too.
+- Rock formations with adjustable amount, size and minimum cluster size, so there are no scattered crumbs. Boulders, vegetation and ore deposits. Starting ores are guaranteed near the core, and a walkable path from each spawn to the core is guaranteed too.
 - Separate seeds for shapes, floors, rocks, ores and decoration, so you can reroll one layer at a time.
 - Deterministic: the same sketch and seed always produce the same map.
 
 **Editing**
 - Tile-level painting of floors, walls, ores and decoration, using every block from the game.
+- Wall and Demolish tools that only add or remove walls. The floor and ores underneath stay, and the wall type matches the floor automatically.
 - Edited tiles are locked automatically, so regenerating never overwrites manual work.
 - Resize with anchoring, flip, undo/redo (including rerolls), grid overlay.
 - Rendering uses the game's own sprites, including edge blending and wall shading.
@@ -106,10 +108,11 @@ the file into the game's `maps` folder.
 |---|---|---|---|
 | `B` | Brush | `G` | Generate |
 | `E` | Eraser | `Shift+G` | Generate with a new seed |
-| `F` | Fill (`Shift`: replace on whole map) | `X` | Toggle relative / fixed |
+| `F` | Fill (`Shift`: replace on whole map) | `H` | Sketch overlay |
 | `L` | River | `[` / `]` | Brush size |
-| `R` / `O` | Rectangle / ellipse | `H` | Sketch overlay |
-| `C` / `S` | Core / spawn | `0` | Center view |
+| `R` / `O` | Rectangle / ellipse | `0` | Center view |
+| `C` / `S` | Core / spawn | | |
+| `W` / `Q` | Wall / demolish (Edit mode) | `X` | Toggle relative / fixed |
 | `Ctrl+Z` / `Ctrl+Y` | Undo / redo | `Space`, right mouse | Pan |
 
 ## Command-line interface

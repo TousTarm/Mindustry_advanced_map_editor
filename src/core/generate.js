@@ -17,8 +17,9 @@ export const DEFAULT_PARAMS = {
   dither: 1.6, // speckled blending between biomes (tiles)
   detail: 1, // amount of secondary floor patches (0 = flat biomes)
   shore: 1, // beach width multiplier
-  rocks: 0.22, // interior rock cluster density 0..1
-  rockScale: 20,
+  rocks: 0.12, // interior rock cluster density 0..1
+  rockScale: 24,
+  rockMin: 60, // generated rock clusters smaller than this many tiles are removed (no scattered crumbs)
   smooth: 2, // cellular automata passes on walls
   border: 0, // extra wall thickness at the map edge (0 = none)
   boulders: 0.02,
@@ -212,14 +213,13 @@ export function generate(sketch, userParams = {}, catalog) {
   const sketchWall = wall.slice();
   const fixedWall = new Uint8Array(N);
   for (let i = 0; i < N; i++) fixedWall[i] = sketchWall[i] && isFixed(i) ? 1 : 0;
-  const dSketchWall = edt(W, H, (i) => sketchWall[i]);
   if (P.rocks > 0) {
-    const rn = fbm(sRocks, { scale: P.rockScale, octaves: 5, persistence: 0.55 });
+    const rn = fbm(sRocks, { scale: P.rockScale, octaves: 3, persistence: 0.5 });
     const rr = ridged(sRocks + 9, { scale: P.rockScale * 2.2, octaves: 3 });
     const rv = new Float32Array(N), mask = new Uint8Array(N);
     for (let i = 0; i < N; i++) {
       const x = i % W, y = (i / W) | 0;
-      rv[i] = rn(x, y) + 0.25 * rr(x, y) ** 6 + 0.35 * Math.exp(-dSketchWall[i] / 5);
+      rv[i] = rn(x, y) + 0.2 * rr(x, y) ** 6;
       mask[i] = !isLiquid(i) && !wall[i] && !isFixed(i) && KIND[shape[i]] !== 'void' ? 1 : 0;
     }
     const t = quantile(rv, mask, 1 - P.rocks * 0.5);
@@ -248,6 +248,25 @@ export function generate(sketch, userParams = {}, catalog) {
     }
     wall = next;
   }
+  // drop small generated rock clusters; sketched walls and fixed tiles are kept
+  const dropSmallRocks = () => {
+    if (!(P.rockMin > 0)) return;
+    const seen = new Uint8Array(N), stack = [], comp = [];
+    const gen = (i) => wall[i] && !sketchWall[i] && !isFixed(i);
+    for (let s = 0; s < N; s++) {
+      if (seen[s] || !gen(s)) continue;
+      comp.length = 0; stack.push(s); seen[s] = 1;
+      while (stack.length) {
+        const i = stack.pop(), x = i % W;
+        comp.push(i);
+        for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) {
+          if (j >= 0 && j < N && !seen[j] && gen(j)) { seen[j] = 1; stack.push(j); }
+        }
+      }
+      if (comp.length < P.rockMin) for (const i of comp) wall[i] = 0;
+    }
+  };
+  dropSmallRocks();
 
   // ---- 5. protected zones and guaranteed paths ----
   const sDeco = seedOf('deco');
@@ -297,6 +316,8 @@ export function generate(sketch, userParams = {}, catalog) {
       }
     }
   }
+
+  dropSmallRocks(); // path carving can leave crumbs behind
 
   for (let i = 0; i < N; i++) {
     if (!wall[i]) continue;

@@ -19,7 +19,7 @@ const labelName = (k) => (t('label.' + k) === 'label.' + k ? k : t('label.' + k)
 // [key, min, max, step]
 const PARAMS = [
   ['warp', 0, 30, 0.5], ['rough', 0, 10, 0.25], ['liquidWarp', 0, 1, 0.05], ['dither', 0, 5, 0.1],
-  ['detail', 0, 2, 0.05], ['shore', 0, 3, 0.05], ['rocks', 0, 1, 0.01], ['rockScale', 6, 60, 1],
+  ['detail', 0, 2, 0.05], ['shore', 0, 3, 0.05], ['rocks', 0, 1, 0.01], ['rockScale', 6, 60, 1], ['rockMin', 0, 300, 10],
   ['smooth', 0, 5, 1], ['border', 0, 12, 1], ['boulders', 0, 0.1, 0.002], ['trees', 0, 1, 0.05],
   ['ores', 0, 3, 0.05], ['coreClear', 3, 20, 1], ['deep', 0, 2, 0.05],
 ];
@@ -34,8 +34,14 @@ const SKETCH_TOOLS = [
 ];
 const EDIT_TOOLS = [
   ['brush', '🖌', 'B'], ['erase', '⌫', 'E'], ['line', '╱', 'L'], ['spray', '💨', 'P'],
-  ['fill', '🪣', 'F'], ['picker', '💧', 'I'], ['lock', '🔒', 'K'], ['unlock', '🔓', 'J'], ['pan', '✋', 'Space'],
+  ['fill', '🪣', 'F'], ['picker', '💧', 'I'], ['wall', '🧱', 'W'], ['unwall', '⛏', 'Q'],
+  ['lock', '🔒', 'K'], ['unlock', '🔓', 'J'], ['pan', '✋', 'Space'],
 ];
+
+// wall that matches a floor (sand -> sand wall, snow -> snow wall, ...), used by the Wall tool
+const WALL_FOR = {};
+for (const b of Object.values(BIOMES)) if (b.base && b.wall) WALL_FOR[b.base] ??= b.wall;
+const wallFor = (floor) => WALL_FOR[floor] ?? B[floor]?.wall ?? (B[floor + '-wall']?.kind === 'wall' ? floor + '-wall' : 'stone-wall');
 
 // ---------------------------------------------------------------- state
 const S = {
@@ -289,7 +295,7 @@ function toolDown(p, e) {
     else if (t === 'line') { pushUndo(['sketch']); }
     else if (t === 'core' || t === 'spawn' || t === 'ore') { pushUndo(['markers']); placeMarker(t, tileOf(p), e); afterSketchChange(); }
   } else {
-    if (t === 'brush' || t === 'erase' || t === 'lock' || t === 'unlock' || t === 'spray') { pushUndo(['tiles', 'locks']); paintTiles(p, p); }
+    if (['brush', 'erase', 'lock', 'unlock', 'spray', 'wall', 'unwall'].includes(t)) { pushUndo(['tiles', 'locks']); paintTiles(p, p); }
     else if (t === 'line') { pushUndo(['tiles', 'locks']); }
     else if (t === 'fill') { pushUndo(['tiles', 'locks']); fillTiles(tileOf(p), e.shiftKey); }
     else if (t === 'picker') pickBlock(tileOf(p));
@@ -297,7 +303,7 @@ function toolDown(p, e) {
 }
 function toolMove(p) {
   if (S.mode === 'sketch' && (S.tool === 'brush' || S.tool === 'erase')) paintSketchStroke(pointer.last, p);
-  if (S.mode === 'edit' && ['brush', 'erase', 'lock', 'unlock', 'spray'].includes(S.tool)) paintTiles(pointer.last, p);
+  if (S.mode === 'edit' && ['brush', 'erase', 'lock', 'unlock', 'spray', 'wall', 'unwall'].includes(S.tool)) paintTiles(pointer.last, p);
 }
 function toolUp(p) {
   const t = S.tool;
@@ -320,7 +326,7 @@ function toolUp(p) {
     }
   }
   if (S.mode === 'edit' && t === 'line') paintTiles(pointer.start, p);
-  if (S.mode === 'edit' && ['brush', 'erase', 'fill', 'line', 'spray'].includes(t)) scheduleAutosave();
+  if (S.mode === 'edit' && ['brush', 'erase', 'fill', 'line', 'spray', 'wall', 'unwall'].includes(t)) scheduleAutosave();
 }
 
 const currentLabelKey = () => (S.tool === 'erase' ? null : S.label);
@@ -404,6 +410,9 @@ function paintTiles(a, b) {
         if (t === 'unlock') { S.locks.delete(i); continue; }
         if (m.block[i] === '@part' || m.buildings.has(i)) continue;
         if (t === 'erase') { setTile(i, 'block', 'air', changes); setTile(i, 'overlay', 'air', changes); }
+        // wall tools touch only the block layer: floor, ores and everything else underneath stay
+        else if (t === 'wall') setTile(i, 'block', wallFor(m.floor[i]), changes);
+        else if (t === 'unwall') { if (B[m.block[i]]?.kind === 'wall') setTile(i, 'block', 'air', changes); }
         else {
           const kind = B[S.block]?.kind;
           if (kind === 'floor') setTile(i, 'floor', S.block, changes);
@@ -450,7 +459,7 @@ function pickBlock([x, y]) {
 function drawToolPreview() {
   if (!hover) return;
   const z = S.view.zoom;
-  const brushTools = S.mode === 'sketch' ? ['brush', 'erase', 'path', 'ore', 'line'] : ['brush', 'erase', 'lock', 'unlock', 'spray', 'line'];
+  const brushTools = S.mode === 'sketch' ? ['brush', 'erase', 'path', 'ore', 'line'] : ['brush', 'erase', 'lock', 'unlock', 'spray', 'line', 'wall', 'unwall'];
   if (brushTools.includes(S.tool)) {
     for (const q of symmetric(hover)) {
       const [sx, sy] = tileToScreen(...q), r = Math.max(2, (S.brush / 2) * z);
@@ -585,6 +594,7 @@ function loadProject(p) {
   S.sketch = rasterizeSpec(p.spec);
   if (p.params && !('deep' in p.params)) p.params.border = 0; // projects from before the border default changed
   setBackground(p.bg ?? null);
+  if (p.params && !('rockMin' in p.params) && p.params.rocks === 0.22 && p.params.rockScale === 20) { p.params.rocks = DEFAULT_PARAMS.rocks; p.params.rockScale = DEFAULT_PARAMS.rockScale; }
   S.params = { ...structuredClone(DEFAULT_PARAMS), ...p.params };
   S.locks = new Map((p.locks ?? []).map(([i, floor, overlay, block]) => [i, { floor, overlay, block }]));
   S.map = p.msavBase64 ? readMsav(fromB64(p.msavBase64)) : null;
@@ -1056,6 +1066,8 @@ function applyImage(form) {
     }
     S.sketch.name = S.sketch.name || t('msg.newMap');
     S.map = null; S.locks = new Map();
+    S.params.rocks = 0; // only what was drawn – no random rocks (the slider can bring them back)
+    syncParamsUI();
     setBackground({ url, rect: [0, 0, w, h] });
     afterLoad();
     generateNow(false);

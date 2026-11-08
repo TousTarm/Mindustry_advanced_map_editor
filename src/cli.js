@@ -185,7 +185,7 @@ switch (cmd) {
     const labels = imageToLabels(png.data, png.width, png.height, W, H, {
       ...(a.close ? { closeGaps: +a.close } : {}), ...(a.line ? { lineWidth: +a.line } : {}),
     });
-    const spec = { name: path.basename(a._[1]).replace(/\.\w+$/, ''), width: W, height: H, base: a.base ?? 'stone', labelsRLE: rleEncode(labels), cores: [], spawns: [] };
+    const spec = { name: path.basename(a._[1]).replace(/\.\w+$/, ''), width: W, height: H, base: a.base ?? 'stone', labelsRLE: rleEncode(labels), cores: [], spawns: [], params: { rocks: 0 } }; // only the drawn walls, no random rocks
     const out = a.o ?? a._[1].replace(/\.\w+$/, '.spec.json');
     fs.writeFileSync(out, JSON.stringify(spec));
     sketchPng(rasterizeSpec(spec), out.replace(/\.json$/, '.sketch.png'), 2);
