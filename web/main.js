@@ -7,44 +7,34 @@ import { DEFAULT_PARAMS } from '../src/core/generate.js';
 import { LABELS, LABEL, BIOMES, LIQUIDS, ORES } from '../src/core/palettes.js';
 import { deriveSketch, sketchToSpec, applyLocks } from '../src/core/project.js';
 import { imageToLabels } from '../src/core/imagesketch.js';
+import { t, applyDom, setLang, getLang } from './i18n.js';
 
 const $ = (s) => document.querySelector(s);
 const B = catalog.blocks;
+applyDom();
 
-const LABEL_NAMES = {
-  wall: 'Skála', void: 'Prázdno', sand: 'Písek', darksand: 'Tmavý písek', stone: 'Kámen', grass: 'Tráva', snow: 'Sníh',
-  ice: 'Led', moss: 'Mech', spore: 'Spóry', shale: 'Břidlice', basalt: 'Čedič', salt: 'Sůl', dirt: 'Hlína',
-  water: 'Voda', tainted: 'Kontam. voda', slag: 'Struska', tar: 'Dehet', cryo: 'Kryo',
-};
+// UI names come from i18n.js (keys label.*, param.*, tool.*)
+const labelName = (k) => (t('label.' + k) === 'label.' + k ? k : t('label.' + k));
 
+// [key, min, max, step]
 const PARAMS = [
-  ['warp', 'Zvlnění tvarů', 0, 30, 0.5, 'Jak moc se velké tvary ze skici kroutí'],
-  ['rough', 'Roztřepení okrajů', 0, 10, 0.25, 'Drobná nepravidelnost hran'],
-  ['liquidWarp', 'Zvlnění vody', 0, 1, 0.05, 'Řeky drží skicu víc než pevnina (0 = přesně podle skici)'],
-  ['dither', 'Prolínání biomů', 0, 5, 0.1, 'Tečkovaný přechod mezi biomy'],
-  ['detail', 'Detail podlah', 0, 2, 0.05, 'Množství skvrn sekundárních podlah'],
-  ['shore', 'Šířka pláží', 0, 3, 0.05, 'Pásy písku a mělčin u vody'],
-  ['rocks', 'Skály', 0, 1, 0.01, 'Hustota skalních útvarů uvnitř pevniny'],
-  ['rockScale', 'Velikost skal', 6, 60, 1, 'Velikost skalních útvarů'],
-  ['smooth', 'Vyhlazení skal', 0, 5, 1, 'Průchody cellular automata'],
-  ['border', 'Okraj mapy', 0, 12, 1, 'Tloušťka skály na okraji mapy'],
-  ['boulders', 'Balvany', 0, 0.1, 0.002, 'Hustota balvanů (víc u skal)'],
-  ['trees', 'Stromy', 0, 1, 0.05, 'Stromy v trávě a sněhu'],
-  ['ores', 'Rudy', 0, 3, 0.05, 'Množství rud (vzácnější dál od core)'],
-  ['coreClear', 'Volno u core', 3, 20, 1, 'Poloměr volného místa kolem core'],
-  ['deep', 'Hloubka vody', 0, 2, 0.05, '0 = jen mělká voda, víc = hluboká voda dřív od břehu'],
+  ['warp', 0, 30, 0.5], ['rough', 0, 10, 0.25], ['liquidWarp', 0, 1, 0.05], ['dither', 0, 5, 0.1],
+  ['detail', 0, 2, 0.05], ['shore', 0, 3, 0.05], ['rocks', 0, 1, 0.01], ['rockScale', 6, 60, 1],
+  ['smooth', 0, 5, 1], ['border', 0, 12, 1], ['boulders', 0, 0.1, 0.002], ['trees', 0, 1, 0.05],
+  ['ores', 0, 3, 0.05], ['coreClear', 3, 20, 1], ['deep', 0, 2, 0.05],
 ];
-const PARAM_CHECKS = [['oresOn', 'Rudy'], ['startOres', 'Měď a olovo u core'], ['ensurePath', 'Zaručit cestu spawn → core']];
-const SHORE_NAMES = { water: 'voda', tainted: 'kontam. voda', slag: 'struska', tar: 'dehet', cryo: 'kryo' };
+const PARAM_CHECKS = ['oresOn', 'startOres', 'ensurePath'];
+const SHORE_KEYS = ['water', 'tainted', 'slag', 'tar', 'cryo'];
 
+// [tool, icon, shortcut]
 const SKETCH_TOOLS = [
-  ['brush', '🖌', 'Štětec', 'B'], ['erase', '⌫', 'Guma', 'E'], ['fill', '🪣', 'Výplň', 'F'], ['path', '〰', 'Řeka', 'L'],
-  ['line', '╱', 'Čára', 'N'], ['rect', '▭', 'Obdélník', 'R'], ['ellipse', '◯', 'Elipsa', 'O'], ['core', '▣', 'Core', 'C'],
-  ['spawn', '◎', 'Spawn', 'S'], ['ore', '◆', 'Ruda', 'U'], ['pan', '✋', 'Posun', 'Space'],
+  ['brush', '🖌', 'B'], ['erase', '⌫', 'E'], ['fill', '🪣', 'F'], ['path', '〰', 'L'],
+  ['line', '╱', 'N'], ['rect', '▭', 'R'], ['ellipse', '◯', 'O'], ['core', '▣', 'C'],
+  ['spawn', '◎', 'S'], ['ore', '◆', 'U'], ['pan', '✋', 'Space'],
 ];
 const EDIT_TOOLS = [
-  ['brush', '🖌', 'Štětec', 'B'], ['erase', '⌫', 'Guma', 'E'], ['line', '╱', 'Čára', 'L'], ['spray', '💨', 'Sprej', 'P'],
-  ['fill', '🪣', 'Výplň', 'F'], ['picker', '💧', 'Kapátko', 'I'], ['lock', '🔒', 'Zamknout', 'K'], ['unlock', '🔓', 'Odemknout', 'J'], ['pan', '✋', 'Posun', 'Space'],
+  ['brush', '🖌', 'B'], ['erase', '⌫', 'E'], ['line', '╱', 'L'], ['spray', '💨', 'P'],
+  ['fill', '🪣', 'F'], ['picker', '💧', 'I'], ['lock', '🔒', 'K'], ['unlock', '🔓', 'J'], ['pan', '✋', 'Space'],
 ];
 
 // ---------------------------------------------------------------- state
@@ -535,21 +525,21 @@ function generateNow(recordUndo = true) {
   if (recordUndo) pushUndo(['map']);
   const id = ++genId;
   $('#busy').hidden = false;
-  status('Generuji…');
+  status(t('msg.generating'));
   worker.postMessage({ id, sketch: { ...S.sketch, labels: S.sketch.labels.slice() }, params: S.params });
 }
 worker.onmessage = (e) => {
   const r = e.data;
   if (r.id !== genId) return;
   $('#busy').hidden = true;
-  if (r.error) { status('Chyba generování'); console.error(r.error); toast('Generování selhalo: ' + r.error.split('\n')[0]); return; }
+  if (r.error) { status(t('msg.genError')); console.error(r.error); toast(t('msg.genFailed', { err: r.error.split('\n')[0] })); return; }
   const N = r.width * r.height, map = { width: r.width, height: r.height, floor: new Array(N), overlay: new Array(N), block: new Array(N), buildings: new Map(), tags: r.tags };
   for (let i = 0; i < N; i++) { map.floor[i] = r.names[r.floor[i]]; map.overlay[i] = r.names[r.overlay[i]]; map.block[i] = r.names[r.block[i]]; }
   for (const [i, team] of r.buildings) map.buildings.set(i, { team });
   applyLocks(map, S.locks);
   S.map = map;
   resetChunks();
-  status(`Vygenerováno za ${Math.round(r.ms)} ms · seed ${S.params.seed}`);
+  status(t('msg.generated', { ms: Math.round(r.ms), seed: S.params.seed }));
   requestDraw();
 };
 function reroll(stage) {
@@ -570,7 +560,7 @@ function newProject(w, h, base, island) {
   }
   S.sketch.cores = [{ pos: [Math.round(w * 0.3), Math.round(h * 0.3)], team: 1, block: 'core-shard' }];
   S.sketch.spawns = [[Math.round(w * 0.72), Math.round(h * 0.72)]];
-  S.sketch.name = 'Nová mapa';
+  S.sketch.name = t('msg.newMap');
   S.bg = null;
   S.map = null; S.locks = new Map(); S.undo = []; S.redo = [];
   afterLoad();
@@ -611,7 +601,7 @@ function loadMsavBytes(bytes, name) {
   S.locks = new Map(); S.undo = []; S.redo = [];
   S.autoGen = false; $('#auto-gen').checked = false;
   afterLoad();
-  toast(`Načteno: ${map.width}×${map.height}. Skica byla odvozena z mapy – <b>✨ Zkrášlit</b> ji přegeneruje s detaily.`, [['OK']]);
+  toast(t('msg.loadedMsav', { w: map.width, h: map.height }), [['OK']]);
 }
 const BUILDING_SIZES = Object.fromEntries(Object.entries(B).filter(([, b]) => b.kind === 'building').map(([k, b]) => [k, { size: b.size ?? 1 }]));
 function exportMsav() {
@@ -648,7 +638,7 @@ async function pollInbox() {
       lastInbox = j.mtime;
       localStorage.setItem('mindscape-inbox', String(lastInbox));
       const d = j.data;
-      toast(`🤖 Claude poslal návrh${d.note ? ': ' + d.note : ''}`, [['Načíst', () => loadInbox(d), 'primary'], ['Ignorovat']]);
+      toast(t('msg.claudeSent', { note: d.note ? ': ' + d.note : '' }), [[t('msg.load'), () => loadInbox(d), 'primary'], [t('msg.ignore')]]);
     }
   } catch { /* bridge not available (static build) */ }
 }
@@ -668,8 +658,8 @@ async function sendToClaude() {
     const body = { ...projectJSON(true), sentAt: new Date().toISOString() };
     const r = await fetch('/api/outbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!r.ok) throw new Error(r.statusText);
-    toast('Odesláno do .mindscape/outbox – napiš Claudovi, ať se podívá.');
-  } catch (err) { toast('Bridge není dostupný (spusť editor přes npm run dev): ' + err.message); }
+    toast(t('msg.sentToClaude'));
+  } catch (err) { toast(t('msg.noBridge', { err: err.message })); }
 }
 
 // ---------------------------------------------------------------- UI wiring
@@ -686,7 +676,8 @@ function buildTools() {
   const tools = S.mode === 'sketch' ? SKETCH_TOOLS : EDIT_TOOLS;
   if (!tools.some(([k]) => k === S.tool)) S.tool = 'brush';
   $('#tools').innerHTML = '';
-  for (const [k, icon, name, key] of tools) {
+  for (const [k, icon, key] of tools) {
+    const name = t('tool.' + k);
     const b = document.createElement('button');
     b.innerHTML = `${icon}<small>${name}</small>`;
     b.title = `${name} (${key})`;
@@ -704,7 +695,7 @@ function setTool(k) {
 function setMode(m) {
   S.mode = m;
   document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
-  if (m === 'edit' && !S.map) toast('Nejdřív vygeneruj mapu.');
+  if (m === 'edit' && !S.map) toast(t('msg.generateFirst'));
   buildTools(); requestDraw();
 }
 
@@ -714,20 +705,20 @@ function buildPalette() {
   pal.className = 'palette';
   $('#block-search').hidden = true; $('#block-tabs').hidden = true;
   if (S.mode === 'sketch' && S.tool === 'ore') {
-    $('#palette-title').textContent = 'Ruda';
+    $('#palette-title').textContent = t('pal.ore');
     for (const ore of Object.keys(ORES)) addSwatch(ore.replace('ore-', ''), spriteStyle(ore, 18), S.ore === ore, () => { S.ore = ore; buildPalette(); });
     return;
   }
   if (S.mode === 'sketch') {
-    $('#palette-title').textContent = 'Paleta skici';
+    $('#palette-title').textContent = t('pal.sketch');
     for (const l of LABELS.slice(1)) {
-      addSwatch(LABEL_NAMES[l.key] ?? l.key, `background:${l.color}`, S.label === l.key, () => { S.label = l.key; if (S.tool === 'erase') S.tool = 'brush'; buildTools(); }, l.kind);
+      addSwatch(labelName(l.key), `background:${l.color}`, S.label === l.key, () => { S.label = l.key; if (S.tool === 'erase') S.tool = 'brush'; buildTools(); }, l.kind);
     }
     return;
   }
-  $('#palette-title').textContent = 'Bloky';
+  $('#palette-title').textContent = t('pal.blocks');
   $('#block-search').hidden = false; $('#block-tabs').hidden = false;
-  const tabs = [['floor', 'Podlahy'], ['wall', 'Zdi'], ['overlay', 'Rudy'], ['prop', 'Dekorace']];
+  const tabs = ['floor', 'wall', 'overlay', 'prop'].map((k) => [k, t('tab.' + k)]);
   $('#block-tabs').innerHTML = '';
   for (const [k, n] of tabs) {
     const b = document.createElement('button');
@@ -752,60 +743,52 @@ function addSwatch(label, style, active, onclick, title) {
   $('#palette').appendChild(b);
 }
 function buildHint() {
-  const h = {
-    brush: S.mode === 'sketch' ? 'Maluj hrubé oblasti. <b>Relativní</b> tvary jsou jen náznak a noise je přetvoří. <b>Fixní</b> zůstanou přesně tak, jak jsou nakreslené (přepínač <kbd>X</kbd>, fixní mají bílý obrys).' : 'Kresli vybraný blok. Upravené dlaždice se samy zamknou, takže je další generování nepřepíše.',
-    erase: S.mode === 'sketch' ? 'Vrátí oblast na základní biom.' : 'Smaže zdi, dekorace a rudy.',
-    fill: S.mode === 'edit' ? 'Vyplní souvislou oblast. <kbd>Shift</kbd>+klik nahradí všechny stejné dlaždice v celé mapě.' : 'Vyplní souvislou oblast.',
-    line: 'Táhni myší pro rovnou čáru (šířka = štětec).',
-    spray: 'Náhodně rozprašuje vybraný blok, hodí se na balvany a rudy.',
-    path: 'Klikáním přidávej body řeky, dvojklik nebo <kbd>Enter</kbd> ji dokončí, <kbd>Esc</kbd> zruší. Šířku určuje štětec.',
-    rect: 'Táhni myší.', ellipse: 'Táhni myší.',
-    core: 'Klik = tvoje core, <kbd>Shift</kbd>+klik = nepřátelské core, <kbd>Alt</kbd>+klik = smazat. Se symetrií vzniknou PvP core.',
-    spawn: 'Klik = spawn nepřátel, <kbd>Alt</kbd>+klik = smazat.',
-    ore: 'Klik = ložisko vybrané rudy (velikost = štětec), <kbd>Alt</kbd>+klik = smazat.',
-    picker: 'Klikni na dlaždici a vezmi její blok.',
-    lock: 'Zamčené dlaždice zůstanou při dalším generování beze změny.',
-    unlock: 'Odemčené dlaždice se při dalším generování přepíšou.',
-    pan: 'Táhni pro posun. Kdykoli funguje i prostřední nebo pravé tlačítko a <kbd>Space</kbd>.',
-  }[S.tool] ?? '';
-  $('#hint').innerHTML = `${h}<br><br><kbd>Tab</kbd> skica/úpravy · <kbd>G</kbd> generovat · <kbd>Shift+G</kbd> nový seed · <kbd>[</kbd> <kbd>]</kbd> štětec · <kbd>H</kbd> skica přes mapu · kolečko = zoom`;
+  const tool = S.tool, mode = S.mode;
+  const key = ['brush', 'erase', 'fill'].includes(tool) ? `hint.${tool}.${mode}` : tool === 'rect' || tool === 'ellipse' ? 'hint.drag' : 'hint.' + tool;
+  $('#hint').innerHTML = `${t(key)}<br><br>${t('hint.keys')}`;
 }
 
+let paramsWired = false;
+function buildParamsUI() {
+  const box = $('#params');
+  box.innerHTML = '';
+  for (const [k, min, max, step] of PARAMS) {
+    const d = document.createElement('div');
+    d.className = 'param'; d.title = t(`param.${k}.tip`);
+    d.innerHTML = `<div class="top"><span>${t('param.' + k)}</span><b data-v="${k}"></b></div><input type="range" min="${min}" max="${max}" step="${step}" data-p="${k}">`;
+    box.appendChild(d);
+  }
+  for (const k of PARAM_CHECKS) {
+    const l = document.createElement('label');
+    l.className = 'row check';
+    l.innerHTML = `<input type="checkbox" data-p="${k}"> ${t('param.' + k)}`;
+    box.appendChild(l);
+  }
+  const sh = document.createElement('div');
+  sh.className = 'shores';
+  sh.innerHTML = `<div class="small">${t('right.shores')}</div>` + SHORE_KEYS.map((k) => `<label class="check"><input type="checkbox" data-shore="${k}"> ${labelName(k).toLowerCase()}</label>`).join('');
+  box.appendChild(sh);
+  if (paramsWired) return;
+  paramsWired = true;
+  box.addEventListener('input', (e) => {
+    if (e.target.dataset.shore) {
+      S.params.shores = { ...DEFAULT_PARAMS.shores, ...S.params.shores, [e.target.dataset.shore]: e.target.checked };
+      scheduleAutosave();
+      if (S.autoGen) { clearTimeout(genTimer); genTimer = setTimeout(() => generateNow(false), 150); }
+      return;
+    }
+    const k = e.target.dataset.p;
+    if (!k) return;
+    S.params[k] = e.target.type === 'checkbox' ? e.target.checked : +e.target.value;
+    box.querySelector(`[data-v="${k}"]`)?.replaceChildren(String(S.params[k]));
+    scheduleAutosave();
+    if (S.autoGen) { clearTimeout(genTimer); genTimer = setTimeout(() => generateNow(false), 250); }
+  });
+  box.addEventListener('pointerdown', (e) => { if (e.target.dataset.p || e.target.dataset.shore) pushUndo(['map']); });
+}
 function syncParamsUI() {
   const box = $('#params');
-  if (!box.childElementCount) {
-    for (const [k, name, min, max, step, tip] of PARAMS) {
-      const d = document.createElement('div');
-      d.className = 'param'; d.title = tip;
-      d.innerHTML = `<div class="top"><span>${name}</span><b data-v="${k}"></b></div><input type="range" min="${min}" max="${max}" step="${step}" data-p="${k}">`;
-      box.appendChild(d);
-    }
-    for (const [k, name] of PARAM_CHECKS) {
-      const l = document.createElement('label');
-      l.className = 'row check';
-      l.innerHTML = `<input type="checkbox" data-p="${k}"> ${name}`;
-      box.appendChild(l);
-    }
-    const sh = document.createElement('div');
-    sh.className = 'shores';
-    sh.innerHTML = '<div class="small">Pláže a přechody u:</div>' + Object.entries(SHORE_NAMES).map(([k, n]) => `<label class="check"><input type="checkbox" data-shore="${k}"> ${n}</label>`).join('');
-    box.appendChild(sh);
-    box.addEventListener('input', (e) => {
-      if (e.target.dataset.shore) {
-        S.params.shores = { ...DEFAULT_PARAMS.shores, ...S.params.shores, [e.target.dataset.shore]: e.target.checked };
-        scheduleAutosave();
-        if (S.autoGen) { clearTimeout(genTimer); genTimer = setTimeout(() => generateNow(false), 150); }
-        return;
-      }
-      const k = e.target.dataset.p;
-      if (!k) return;
-      S.params[k] = e.target.type === 'checkbox' ? e.target.checked : +e.target.value;
-      box.querySelector(`[data-v="${k}"]`)?.replaceChildren(String(S.params[k]));
-      scheduleAutosave();
-      if (S.autoGen) { clearTimeout(genTimer); genTimer = setTimeout(() => generateNow(false), 250); }
-    });
-    box.addEventListener('pointerdown', (e) => { if (e.target.dataset.p || e.target.dataset.shore) pushUndo(['map']); });
-  }
+  if (!box.childElementCount) buildParamsUI();
   for (const el of box.querySelectorAll('[data-shore]')) el.checked = ({ ...DEFAULT_PARAMS.shores, ...S.params.shores })[el.dataset.shore] !== false;
   for (const el of box.querySelectorAll('[data-p]')) {
     const k = el.dataset.p;
@@ -819,14 +802,32 @@ function syncMapUI() {
   $('#map-author').value = S.sketch.author ?? '';
   $('#map-desc').value = S.sketch.description ?? '';
   $('#base-biome').value = S.sketch.base;
-  $('#map-size').textContent = `${W()} × ${H()} dlaždic`;
+  $('#map-size').textContent = t('right.size', { w: W(), h: H() });
+}
+
+function fillBiomeSelects() {
+  for (const sel of document.querySelectorAll('.biome-select')) {
+    const v = sel.value;
+    sel.innerHTML = '';
+    for (const k of Object.keys(BIOMES)) sel.add(new Option(labelName(k), k));
+    if (v) sel.value = v;
+  }
+}
+const syncLangButtons = () => document.querySelectorAll('[data-lang]').forEach((b) => b.classList.toggle('active', b.dataset.lang === getLang()));
+function switchLang(l) {
+  setLang(l);
+  syncLangButtons();
+  fillBiomeSelects();
+  buildParamsUI(); syncParamsUI();
+  buildTools();
+  if (S.sketch) syncMapUI();
 }
 
 function initUI() {
-  for (const sel of [$('#base-biome'), document.querySelector('#new-dialog select[name=base]')]) {
-    for (const k of Object.keys(BIOMES)) sel.add(new Option(LABEL_NAMES[k] ?? k, k));
-  }
+  fillBiomeSelects();
   $('#new-dialog select[name=base]').value = 'stone';
+  syncLangButtons();
+  document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => switchLang(b.dataset.lang)));
   document.addEventListener('click', (e) => {
     const t = e.target.closest('button');
     if (!t) return;
@@ -876,7 +877,7 @@ function initUI() {
         if (j.format === 'mindscape-project' || j.format === 'mapforge-project') loadProject(j);
         else { S.sketch = rasterizeSpec(j); S.params = { ...structuredClone(DEFAULT_PARAMS), ...(j.params ?? {}), seed: j.seed ?? 1 }; S.locks = new Map(); afterLoad(); generateNow(false); }
       } else loadMsavBytes(bytes, file.name.replace(/\.msav$/, ''));
-    } catch (err) { toast('Soubor nejde načíst: ' + err.message); console.error(err); }
+    } catch (err) { toast(t('msg.cantLoad', { err: err.message })); console.error(err); }
     e.target.value = '';
   });
   $('#image-input').addEventListener('change', (e) => { if (e.target.files[0]) openImageDialog(e.target.files[0]); e.target.value = ''; });
@@ -890,7 +891,6 @@ function initUI() {
     };
     f.w.addEventListener('input', () => keep('w'));
     f.h.addEventListener('input', () => keep('h'));
-    for (const k of Object.keys(BIOMES)) f.base.add(new Option(LABEL_NAMES[k] ?? k, k));
   }
   $('#resize-dialog').addEventListener('close', () => {
     if ($('#resize-dialog').returnValue !== 'ok') return;
@@ -932,10 +932,10 @@ function initUI() {
     if (k === '[' || k === ']') { S.brush = clamp(S.brush + (k === ']' ? 1 : -1) * Math.max(1, Math.round(S.brush / 6)), 1, 40); $('#brush').value = S.brush; $('#brush-val').textContent = S.brush; requestDraw(); return; }
     if (k === 'h') { S.sketchOpacity = S.sketchOpacity > 0 ? 0 : 0.5; $('#sketch-opacity').value = S.sketchOpacity * 100; requestDraw(); return; }
     if (k === '0') return fitView();
-    if (k === 'x' && S.mode === 'sketch') { S.fixedMode = !S.fixedMode; window.__syncFixed(); toast(S.fixedMode ? 'Fixní tvary – zůstanou přesně tak, jak jsou nakreslené' : 'Relativní tvary – náznak pro noise'); return; }
+    if (k === 'x' && S.mode === 'sketch') { S.fixedMode = !S.fixedMode; window.__syncFixed(); toast(t(S.fixedMode ? 'msg.fixedOn' : 'msg.fixedOff')); return; }
     const tools = S.mode === 'sketch' ? SKETCH_TOOLS : EDIT_TOOLS;
-    const t = tools.find(([, , , key]) => key.toLowerCase() === k);
-    if (t) setTool(t[0]);
+    const tool = tools.find(([, , key]) => key.toLowerCase() === k);
+    if (tool) setTool(tool[0]);
   });
   window.addEventListener('keyup', (e) => { if (e.key === ' ') spaceDown = false; });
 }
@@ -1035,7 +1035,7 @@ function applyImage(form) {
       S.sketch.labels = imageToLabels(data, img.width, img.height, w, h, { closeGaps: +form.close.value, lineWidth: +form.line.value });
       if (form.fixedWalls.checked) for (let i = 0; i < w * h; i++) S.sketch.fixed[i] = S.sketch.labels[i] ? 1 : 0;
     }
-    S.sketch.name = S.sketch.name || 'Nová mapa';
+    S.sketch.name = S.sketch.name || t('msg.newMap');
     S.map = null; S.locks = new Map();
     setBackground({ url, rect: [0, 0, w, h] });
     afterLoad();
@@ -1046,7 +1046,7 @@ function applyImage(form) {
   }
   if (S.bgOpacity === 0) { S.bgOpacity = 0.4; $('#bg-opacity').value = 40; }
   scheduleAutosave();
-  toast('Skica načtena. Core a spawny si polož nástroji v režimu Skica, průhlednost obrázku je v panelu Zobrazení.');
+  toast(t('msg.imageLoaded'));
 }
 
 // ---------------------------------------------------------------- boot
@@ -1066,7 +1066,7 @@ async function boot() {
   let restored = false;
   try {
     const saved = JSON.parse(localStorage.getItem('mindscape-autosave') ?? localStorage.getItem('mapforge-autosave'));
-    if (saved?.format === 'mindscape-project' || saved?.format === 'mapforge-project') { loadProject(saved); restored = true; status('Obnoven poslední projekt'); }
+    if (saved?.format === 'mindscape-project' || saved?.format === 'mapforge-project') { loadProject(saved); restored = true; status(t('msg.restored')); }
   } catch { /* ignore */ }
   if (!restored) newProject(200, 200, 'stone', true);
   pollInbox();

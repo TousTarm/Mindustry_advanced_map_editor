@@ -49,6 +49,8 @@ h3 { margin: 4px 0 8px; font-size: 11px; text-transform: uppercase; letter-spaci
 .row.check { gap: 6px; }
 .row.small, .small { color: var(--muted); font-size: 12px; }
 .row span { width: 30px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.row > span[data-i18n] { width: auto; min-width: 64px; text-align: left; flex-shrink: 0; white-space: nowrap; }
+.row.check > span[data-i18n] { min-width: 0; white-space: normal; flex: 1; color: inherit; }
 
 .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .tools button { padding: 6px 0; font-size: 15px; }

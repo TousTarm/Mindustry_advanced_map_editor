@@ -12,7 +12,8 @@ is reference only (block list, sprites, save format); Mindscape does not depend 
   - `palettes.js` biomes, liquids, ores, sketch labels. Tune the look here.
   - `sketch.js` spec shapes → label grid; `project.js` RLE, `deriveSketch` (map → sketch, for "beautify"), locks.
   - `render.js` sprite renderer incl. in-game wall darkness.
-- `src/cli.js` – CLI (below). `web/` – Vite editor (`npm run dev`, port 5178). `data/` – generated catalog/templates.
+- `src/cli.js` – CLI (below). `web/` – Vite editor (`npm run dev`, port 5178).
+  All UI text lives in `web/i18n.js` as `{ cs, en }` pairs – add both languages for every new string; no hardcoded text in `main.js`/`index.html`. `data/` – generated catalog/templates.
 - `scripts/build-catalog.mjs`, `scripts/extract-templates.mjs` – rebuild `data/` + `public/atlas.png` (`npm run catalog`).
 
 ## Designing maps for the user (the API)

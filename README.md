@@ -61,6 +61,7 @@ Reroll anything you don't like, lock what you do, and finish by hand.
 - Edited tiles are locked automatically, so regenerating never overwrites manual work.
 - Resize with anchoring, flip, undo/redo (including rerolls), grid overlay.
 - Rendering uses the game's own sprites, including edge blending and wall shading.
+- English and Czech interface, switchable at any time (or with `?lang=en` / `?lang=cs` in the URL).
 
 **Files**
 - Import and export of `.msav` (save format version 11).
@@ -169,7 +170,6 @@ examples/     example map specs
 - [ ] Wave and map rules editor
 - [ ] Placing buildings for different teams
 - [ ] More biomes and palettes
-- [ ] English UI (the editor interface is currently in Czech)
 
 ## Bug reports and feature requests
 
