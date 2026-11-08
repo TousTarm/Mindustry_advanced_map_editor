@@ -1,0 +1,15 @@
+{
+  "name": "Ember Rift", "author": "MapForge", "width": 220, "height": 180, "base": "basalt", "seed": 3,
+  "shapes": [
+    { "type": "fill", "label": "wall" },
+    { "type": "polygon", "label": "basalt", "points": [[15,30],[60,10],[150,15],[205,40],[210,120],[170,168],[90,170],[25,150],[10,90]] },
+    { "type": "ellipse", "label": "darksand", "center": [55, 50], "rx": 40, "ry": 30 },
+    { "type": "ellipse", "label": "shale", "center": [170, 135], "rx": 35, "ry": 30 },
+    { "type": "path", "label": "slag", "points": [[110, 175], [115, 130], [95, 95], [120, 60], [100, 0]], "width": [5, 12] },
+    { "type": "ellipse", "label": "slag", "center": [160, 70], "rx": 14, "ry": 10 },
+    { "type": "ellipse", "label": "wall", "center": [70, 120], "rx": 12, "ry": 16 },
+    { "type": "ellipse", "label": "tar", "center": [40, 110], "rx": 10, "ry": 7 }
+  ],
+  "core": [45, 45], "spawns": [[180, 140]],
+  "params": { "rocks": 0.3 }
+}

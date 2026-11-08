@@ -1,0 +1,28 @@
+{
+  "name": "mapforge",
+  "version": "1.0.0",
+  "description": "Mindustry map editor with natural terrain generation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "catalog": "node scripts/build-catalog.mjs && node scripts/extract-templates.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "pako": "^3.0.3",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.16.0",
+    "vite": "^8.3.6"
+  },
+  "bin": {
+    "mapforge": "src/cli.js"
+  }
+}

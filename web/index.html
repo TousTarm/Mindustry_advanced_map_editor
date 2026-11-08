@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MapForge</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">Map<span>Forge</span></div>
+    <div class="group">
+      <button data-action="new" title="Nová mapa">Nová</button>
+      <button data-action="open" title="Otevřít .msav mapu nebo projekt .mfp.json">Otevřít</button>
+      <button data-action="import-image" title="Načíst vlastní nakreslenou skicu (obrázek) – červené čáry = zdi">Obrázek</button>
+      <button data-action="save-project" title="Uložit projekt (skica + parametry + zamčené dlaždice)">Uložit projekt</button>
+      <button data-action="export" class="accent" title="Stáhnout .msav pro Mindustry">Export .msav</button>
+    </div>
+    <div class="group modes">
+      <button data-mode="sketch" class="active" title="Skica: hrubý layout (Tab)">Skica</button>
+      <button data-mode="edit" title="Úpravy: dlaždice, zámky (Tab)">Úpravy</button>
+    </div>
+    <div class="group">
+      <button data-action="undo" title="Zpět (Ctrl+Z)">↶</button>
+      <button data-action="redo" title="Znovu (Ctrl+Y)">↷</button>
+    </div>
+    <div class="group">
+      <button data-action="generate" class="primary" title="Vygenerovat (G)">Generovat</button>
+      <button data-action="reroll-all" title="Nový seed pro všechno (Shift+G)">🎲 Vše</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+      <button data-action="send-claude" title="Pošle aktuální skicu a mapu do .mapforge/outbox pro Clauda">→ Claude</button>
+    </div>
+    <div id="status"></div>
+  </header>
+
+  <aside id="left">
+    <section>
+      <h3>Nástroje</h3>
+      <div id="tools" class="tools"></div>
+      <label class="row">Štětec <input id="brush" type="range" min="1" max="40" value="6" /><span id="brush-val">6</span></label>
+      <div class="row seg" id="fixed-toggle" title="Relativní = náznak pro noise, Fixní = přesně tak, jak je nakreslené (X)">
+        <button data-fixed="0" class="active">Relativní</button><button data-fixed="1">Fixní</button>
+      </div>
+      <label class="row">Tvar
+        <select id="brush-shape"><option value="circle">kruh</option><option value="square">čtverec</option></select>
+      </label>
+      <label class="row">Symetrie
+        <select id="symmetry">
+          <option value="none">žádná</option>
+          <option value="x">zrcadlo ↔</option>
+          <option value="y">zrcadlo ↕</option>
+          <option value="xy">4× zrcadlo</option>
+          <option value="rot2">rotace 180°</option>
+        </select>
+      </label>
+    </section>
+    <section id="palette-section">
+      <h3 id="palette-title">Paleta</h3>
+      <input id="block-search" type="search" placeholder="Hledat blok…" hidden />
+      <div id="block-tabs" class="tabs" hidden></div>
+      <div id="palette" class="palette"></div>
+    </section>
+    <section id="hint" class="hint"></section>
+  </aside>
+
+  <main id="viewport">
+    <canvas id="canvas"></canvas>
+    <div id="cursor-info"></div>
+    <div id="toast" hidden></div>
+    <div id="busy" hidden><div class="spinner"></div></div>
+  </main>
+
+  <aside id="right">
+    <section>
+      <h3>Mapa</h3>
+      <label class="row">Název <input id="map-name" type="text" /></label>
+      <label class="row">Autor <input id="map-author" type="text" /></label>
+      <label class="row">Popis <input id="map-desc" type="text" /></label>
+      <label class="row">Základní biom <select id="base-biome"></select></label>
+      <div class="row"><span class="small grow" id="map-size"></span><button data-action="resize" class="mini">Změnit velikost</button></div>
+      <div class="row">
+        <button data-action="flip-x" class="mini" title="Zrcadlit vodorovně">⇋ Zrcadlit</button>
+        <button data-action="flip-y" class="mini" title="Zrcadlit svisle">⇵ Zrcadlit</button>
+      </div>
+    </section>
+    <section>
+      <h3>Pravidla</h3>
+      <label class="row check"><input data-rule="waves" type="checkbox" /> Vlny nepřátel</label>
+      <label class="row check"><input data-rule="waveTimer" type="checkbox" /> Časovač vln</label>
+      <label class="row">Interval vln (s) <input data-rule="waveSpacing" type="number" min="5" /></label>
+      <label class="row check"><input data-rule="attackMode" type="checkbox" /> Útok (zničit nepřátelské core)</label>
+      <label class="row check"><input data-rule="pvp" type="checkbox" /> PvP</label>
+    </section>
+    <section>
+      <h3>Generátor</h3>
+      <label class="row">Seed <input id="seed" type="number" /><button data-action="reroll-all" class="mini">🎲</button></label>
+      <div class="rerolls">
+        <button data-reroll="shape" title="Nový tvar okrajů">🎲 Tvary</button>
+        <button data-reroll="floor" title="Nové skvrny podlah a pláže">🎲 Podlahy</button>
+        <button data-reroll="rocks" title="Nové skalní útvary">🎲 Skály</button>
+        <button data-reroll="ores" title="Nové rozmístění rud">🎲 Rudy</button>
+        <button data-reroll="deco" title="Nové balvany, stromy, cesty">🎲 Dekorace</button>
+      </div>
+      <div id="params"></div>
+      <label class="row check"><input id="auto-gen" type="checkbox" checked /> Generovat automaticky po tahu</label>
+    </section>
+    <section>
+      <h3>Zobrazení</h3>
+      <label class="row">Skica <input id="sketch-opacity" type="range" min="0" max="100" value="0" /></label>
+      <label class="row">Obrázek <input id="bg-opacity" type="range" min="0" max="100" value="40" /></label>
+      <label class="row check"><input id="show-locks" type="checkbox" checked /> Zobrazit zámky</label>
+      <label class="row check"><input id="show-grid" type="checkbox" /> Mřížka</label>
+      <div class="row">
+        <button data-action="lock-all" class="mini">Zamknout vše</button>
+        <button data-action="unlock-all" class="mini">Odemknout vše</button>
+      </div>
+      <div class="row">
+        <button data-action="beautify" class="mini" title="Odvodí skicu z aktuální mapy a vygeneruje ji znovu s přirozenými detaily">✨ Zkrášlit mapu</button>
+      </div>
+    </section>
+  </aside>
+
+  <dialog id="new-dialog">
+    <form method="dialog">
+      <h3>Nová mapa</h3>
+      <label class="row">Šířka <input name="w" type="number" value="200" min="50" max="1000" /></label>
+      <label class="row">Výška <input name="h" type="number" value="200" min="50" max="1000" /></label>
+      <label class="row">Základní biom <select name="base"></select></label>
+      <label class="row check"><input name="island" type="checkbox" checked /> Začít jako ostrov obklopený skálou</label>
+      <menu><button value="cancel">Zrušit</button><button value="ok" class="primary">Vytvořit</button></menu>
+    </form>
+  </dialog>
+  <dialog id="resize-dialog">
+    <form method="dialog">
+      <h3>Velikost mapy</h3>
+      <label class="row">Šířka <input name="w" type="number" min="20" max="2000" /></label>
+      <label class="row">Výška <input name="h" type="number" min="20" max="2000" /></label>
+      <label class="row">Vodorovně
+        <select name="ax"><option value="center">střed</option><option value="left">ukotvit vlevo</option><option value="right">ukotvit vpravo</option></select>
+      </label>
+      <label class="row">Svisle
+        <select name="ay"><option value="center">střed</option><option value="bottom">ukotvit dole</option><option value="top">ukotvit nahoře</option></select>
+      </label>
+      <p class="small">Mapa se ořízne nebo rozšíří. Nové místo pokračuje tím, co je na okraji.</p>
+      <menu><button value="cancel">Zrušit</button><button value="ok" class="primary">Použít</button></menu>
+    </form>
+  </dialog>
+  <dialog id="image-dialog">
+    <form method="dialog">
+      <h3>Skica z obrázku</h3>
+      <img id="image-preview" alt="" />
+      <label class="row">Šířka <input name="w" type="number" min="20" max="2000" value="200" /></label>
+      <label class="row">Výška <input name="h" type="number" min="20" max="2000" /></label>
+      <label class="row check"><input name="aspect" type="checkbox" checked /> Zachovat poměr stran</label>
+      <label class="row check"><input name="walls" type="checkbox" checked /> Červené čáry → zdi (vnějšek obrysu = skála)</label>
+      <label class="row check"><input name="fixedWalls" type="checkbox" /> Zdi z obrázku jako fixní (jinak je noise přetvoří)</label>
+      <label class="row">Uzavírat mezery <input name="close" type="range" min="0" max="8" value="3" /></label>
+      <label class="row">Tloušťka zdí <input name="line" type="range" min="1" max="7" value="3" /></label>
+      <label class="row">Základní biom <select name="base"></select></label>
+      <label class="row check"><input name="replace" type="checkbox" checked /> Nová mapa (jinak jen pozadí přes aktuální mapu)</label>
+      <menu><button value="cancel">Zrušit</button><button value="ok" class="primary">Načíst</button></menu>
+    </form>
+  </dialog>
+  <input id="file-input" type="file" accept=".msav,.json" hidden />
+  <input id="image-input" type="file" accept="image/*" hidden />
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

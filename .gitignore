@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.mapforge/
+examples/*.msav
+examples/*.png

@@ -1,0 +1,14 @@
+{
+  "name": "Spore Marsh", "author": "MapForge", "width": 200, "height": 200, "base": "moss", "seed": 11,
+  "shapes": [
+    { "type": "fill", "label": "wall" },
+    { "type": "ellipse", "label": "moss", "center": [100, 100], "rx": 90, "ry": 90 },
+    { "type": "ellipse", "label": "spore", "center": [140, 60], "rx": 40, "ry": 35 },
+    { "type": "ellipse", "label": "darksand", "center": [50, 150], "rx": 35, "ry": 30 },
+    { "type": "path", "label": "tainted", "points": [[10, 60], [60, 80], [100, 70], [130, 110], [190, 130]], "width": [8, 14] },
+    { "type": "ellipse", "label": "tainted", "center": [95, 135], "rx": 20, "ry": 14 },
+    { "type": "path", "label": "tainted", "points": [[95, 135], [100, 105]], "width": 6 }
+  ],
+  "core": [40, 140], "spawns": [[165, 45]],
+  "params": { "dither": 2.2, "rocks": 0.18 }
+}

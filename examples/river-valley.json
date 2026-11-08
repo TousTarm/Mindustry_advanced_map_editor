@@ -1,0 +1,23 @@
+{
+  "name": "River Valley",
+  "author": "MapForge",
+  "width": 200,
+  "height": 200,
+  "base": "stone",
+  "seed": 7,
+  "shapes": [
+    { "type": "fill", "label": "wall" },
+    { "type": "ellipse", "label": "stone", "center": [100, 100], "rx": 92, "ry": 86 },
+    { "type": "ellipse", "label": "snow", "center": [40, 160], "rx": 45, "ry": 35 },
+    { "type": "ellipse", "label": "darksand", "center": [165, 45], "rx": 40, "ry": 35 },
+    { "type": "ellipse", "label": "grass", "center": [150, 150], "rx": 35, "ry": 30 },
+    { "type": "ellipse", "label": "wall", "center": [70, 70], "rx": 14, "ry": 10 },
+    { "type": "ellipse", "label": "wall", "center": [135, 105], "rx": 9, "ry": 13 },
+    { "type": "path", "label": "water", "points": [[0, 120], [40, 110], [80, 95], [110, 110], [150, 90], [200, 70]], "width": [10, 16] },
+    { "type": "path", "label": "water", "points": [[110, 110], [120, 150], [100, 200]], "width": [6, 9] },
+    { "type": "ellipse", "label": "water", "center": [60, 30], "rx": 18, "ry": 12 }
+  ],
+  "core": [40, 60],
+  "spawns": [[165, 170]],
+  "ores": [{ "ore": "ore-titanium", "center": [150, 40], "r": 6 }]
+}
