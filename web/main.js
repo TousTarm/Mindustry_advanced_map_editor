@@ -23,7 +23,7 @@ const PARAMS = [
   ['smooth', 0, 5, 1], ['border', 0, 12, 1], ['boulders', 0, 0.1, 0.002], ['trees', 0, 1, 0.05],
   ['ores', 0, 3, 0.05], ['coreClear', 3, 20, 1], ['deep', 0, 2, 0.05],
 ];
-const PARAM_CHECKS = ['oresOn', 'startOres', 'ensurePath'];
+const PARAM_CHECKS = ['ensurePath'];
 const SHORE_KEYS = ['water', 'tainted', 'slag', 'tar', 'cryo'];
 
 // [tool, icon, shortcut]
@@ -752,18 +752,28 @@ let paramsWired = false;
 function buildParamsUI() {
   const box = $('#params');
   box.innerHTML = '';
+  const check = (k, parent) => {
+    const l = document.createElement('label');
+    l.className = 'row check'; l.title = t(`param.${k}.tip`) === `param.${k}.tip` ? '' : t(`param.${k}.tip`);
+    l.innerHTML = `<input type="checkbox" data-p="${k}"> ${t('param.' + k)}`;
+    parent.appendChild(l);
+  };
   for (const [k, min, max, step] of PARAMS) {
+    let parent = box;
+    if (k === 'ores') {
+      // ore on/off switch with the ore settings grouped under it (greyed out when ores are off)
+      check('oresOn', box);
+      parent = document.createElement('div');
+      parent.className = 'ore-group';
+      box.appendChild(parent);
+    }
     const d = document.createElement('div');
     d.className = 'param'; d.title = t(`param.${k}.tip`);
     d.innerHTML = `<div class="top"><span>${t('param.' + k)}</span><b data-v="${k}"></b></div><input type="range" min="${min}" max="${max}" step="${step}" data-p="${k}">`;
-    box.appendChild(d);
+    parent.appendChild(d);
+    if (k === 'ores') check('startOres', parent);
   }
-  for (const k of PARAM_CHECKS) {
-    const l = document.createElement('label');
-    l.className = 'row check';
-    l.innerHTML = `<input type="checkbox" data-p="${k}"> ${t('param.' + k)}`;
-    box.appendChild(l);
-  }
+  for (const k of PARAM_CHECKS) check(k, box);
   const sh = document.createElement('div');
   sh.className = 'shores';
   sh.innerHTML = `<div class="small">${t('right.shores')}</div>` + SHORE_KEYS.map((k) => `<label class="check"><input type="checkbox" data-shore="${k}"> ${labelName(k).toLowerCase()}</label>`).join('');
@@ -781,10 +791,18 @@ function buildParamsUI() {
     if (!k) return;
     S.params[k] = e.target.type === 'checkbox' ? e.target.checked : +e.target.value;
     box.querySelector(`[data-v="${k}"]`)?.replaceChildren(String(S.params[k]));
+    if (k === 'oresOn') syncOreGroup();
     scheduleAutosave();
     if (S.autoGen) { clearTimeout(genTimer); genTimer = setTimeout(() => generateNow(false), 250); }
   });
   box.addEventListener('pointerdown', (e) => { if (e.target.dataset.p || e.target.dataset.shore) pushUndo(['map']); });
+}
+function syncOreGroup() {
+  const on = S.params.oresOn !== false;
+  for (const el of document.querySelectorAll('.ore-group')) {
+    el.classList.toggle('off', !on);
+    for (const i of el.querySelectorAll('input')) i.disabled = !on;
+  }
 }
 function syncParamsUI() {
   const box = $('#params');
@@ -795,6 +813,7 @@ function syncParamsUI() {
     if (el.type === 'checkbox') el.checked = !!S.params[k]; else el.value = S.params[k];
     box.querySelector(`[data-v="${k}"]`)?.replaceChildren(String(S.params[k]));
   }
+  syncOreGroup();
   $('#seed').value = S.params.seed;
 }
 function syncMapUI() {

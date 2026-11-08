@@ -71,6 +71,8 @@ h3 { margin: 4px 0 8px; font-size: 11px; text-transform: uppercase; letter-spaci
 .param { margin: 7px 0; }
 .param .top { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
 .param input { width: 100%; }
+.ore-group { border-left: 2px solid var(--line); padding-left: 8px; margin: -2px 0 6px 4px; }
+.ore-group.off { opacity: 0.4; }
 
 .hint { color: var(--muted); font-size: 12px; line-height: 1.5; border: none; }
 .hint kbd { background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; font-size: 11px; }

@@ -187,7 +187,8 @@ const T = {
   'param.coreClear.tip': { cs: 'Poloměr volného místa kolem core', en: 'Radius of free space around the core' },
   'param.deep': { cs: 'Hloubka vody', en: 'Water depth' },
   'param.deep.tip': { cs: '0 = jen mělká voda, víc = hluboká voda dřív od břehu', en: '0 = shallow water only, higher = deep water closer to shore' },
-  'param.oresOn': { cs: 'Rudy', en: 'Ores' },
+  'param.oresOn': { cs: 'Generovat rudy', en: 'Generate ores' },
+  'param.oresOn.tip': { cs: 'Vypnuto = mapa bez rud. Ložiska, která položíš nástrojem Ruda, zůstanou.', en: 'Off = a map without ores. Deposits you place with the Ore tool are kept.' },
   'param.startOres': { cs: 'Měď a olovo u core', en: 'Copper and lead near the core' },
   'param.ensurePath': { cs: 'Zaručit cestu spawn → core', en: 'Guarantee a spawn → core path' },
 
